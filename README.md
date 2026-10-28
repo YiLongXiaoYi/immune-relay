@@ -4,7 +4,7 @@
 
 ## 在线访问
 
-GitHub Pages：部署完成后在仓库 Pages 设置中查看地址。
+GitHub Pages：https://yilongxiaoyi.github.io/immune-relay/
 
 ## 内容
 
