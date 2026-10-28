@@ -1,0 +1,1264 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>免疫接力 · 互动实验室</title>
+<style>
+  :root{
+    --bg:#05070A;
+    --ink:#F5FAFF;
+    --muted:#8FA0B5;
+    --dim:#526274;
+    --blue:#3D9BFF;
+    --blue-l:#A9DDFF;
+    --orange:#FF8A1F;
+    --orange-l:#FFD08A;
+    --gold:#FFC857;
+    --violet:#B56CFF;
+    --green:#7CE3A3;
+    --line:rgba(126,166,217,.16);
+    --panel:rgba(8,13,19,.72);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:"Microsoft YaHei","PingFang SC","Noto Sans SC",sans-serif;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  .page{
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    position:relative;
+    isolation:isolate;
+    overflow:visible;
+  }
+  .page::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    z-index:-3;
+    background-image:
+      linear-gradient(rgba(126,166,217,.055) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(126,166,217,.055) 1px,transparent 1px);
+    background-size:80px 80px;
+    mask-image:linear-gradient(to bottom,rgba(0,0,0,.9),rgba(0,0,0,.35) 70%,transparent);
+  }
+  .page::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    z-index:-2;
+    background:
+      radial-gradient(900px 620px at 78% 48%,rgba(61,155,255,.18),transparent 68%),
+      radial-gradient(700px 520px at 90% 22%,rgba(255,138,31,.10),transparent 70%),
+      radial-gradient(1000px 700px at 10% 90%,rgba(46,125,50,.07),transparent 70%);
+    pointer-events:none;
+  }
+  .vignette{
+    position:absolute;inset:0 0 auto 0;height:100vh;z-index:-1;pointer-events:none;
+    background:radial-gradient(120% 90% at 50% 45%,transparent 55%,rgba(0,0,0,.55) 100%);
+  }
+
+  header{
+    height:78px;
+    flex:0 0 78px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 56px;
+    border-bottom:1px solid var(--line);
+    position:sticky;
+    top:0;
+    z-index:50;
+    backdrop-filter:blur(14px);
+    background:rgba(5,7,10,.72);
+  }
+  .brand{display:flex;align-items:center;gap:13px;text-decoration:none;color:inherit}
+  .brand-mark{
+    width:36px;height:36px;position:relative;display:grid;place-items:center;
+    filter:drop-shadow(0 0 12px rgba(255,200,87,.28));
+  }
+  .brand-mark svg{width:36px;height:36px;display:block}
+  .brand-text .en{
+    font-family:"Bahnschrift","Arial",sans-serif;
+    font-size:9px;letter-spacing:.24em;color:var(--muted);line-height:1;
+  }
+  .brand-text .cn{
+    font-size:13px;font-weight:700;letter-spacing:.06em;margin-top:6px;line-height:1;
+  }
+  nav{display:flex;align-items:center;gap:30px}
+  nav a{
+    font-size:12.5px;color:var(--muted);text-decoration:none;letter-spacing:.04em;
+    transition:color .2s ease;position:relative;
+  }
+  nav a:hover{color:var(--ink)}
+  nav a.active{color:var(--ink)}
+  nav a.active::after{
+    content:"";position:absolute;left:0;right:0;bottom:-8px;height:2px;
+    background:linear-gradient(90deg,var(--blue),var(--gold));border-radius:2px;
+  }
+  .stage-pill{
+    display:flex;align-items:center;gap:8px;
+    border:1px solid rgba(255,200,87,.24);
+    background:rgba(255,200,87,.055);
+    border-radius:999px;padding:8px 14px;
+    font-size:11px;color:#E8D3A0;letter-spacing:.04em;
+  }
+  .stage-pill i{
+    width:5px;height:5px;border-radius:50%;background:var(--gold);
+    box-shadow:0 0 8px var(--gold);animation:breathe 2.8s ease-in-out infinite;
+  }
+  @keyframes breathe{0%,100%{opacity:.45;transform:scale(.85)}50%{opacity:1;transform:scale(1.15)}}
+
+  .hero{
+    flex:0 0 auto;
+    min-height:calc(100vh - 130px);
+    display:grid;
+    grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);
+    align-items:center;
+    gap:52px;
+    width:100%;
+    max-width:1660px;
+    margin:0 auto;
+    padding:38px 56px 26px;
+  }
+  .copy{max-width:568px;position:relative;z-index:2}
+  .eyebrow{
+    display:flex;align-items:center;gap:12px;
+    font-family:"Bahnschrift","Arial",sans-serif;
+    font-size:10.5px;letter-spacing:.26em;color:var(--blue-l);
+    text-transform:uppercase;
+  }
+  .eyebrow::before{content:"";width:28px;height:1px;background:var(--blue);box-shadow:0 0 8px var(--blue)}
+  h1{
+    margin:20px 0 0;
+    font-size:clamp(74px,7.2vw,112px);
+    line-height:.92;
+    letter-spacing:-.035em;
+    font-weight:900;
+  }
+  h1 .accent{
+    background:linear-gradient(180deg,#FFF6D8 8%,#FFC857 62%,#FF9A2E 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 0 26px rgba(255,200,87,.16));
+  }
+  .title-en{
+    margin-top:17px;
+    font-family:"Bahnschrift","Arial",sans-serif;
+    font-size:11px;letter-spacing:.44em;color:var(--muted);
+    text-transform:uppercase;
+  }
+  .lede{
+    margin:24px 0 0;
+    font-size:19px;line-height:1.75;color:#C9D6E6;letter-spacing:.01em;
+  }
+  .hook{
+    margin-top:25px;
+    padding:16px 0 16px 19px;
+    border-left:2px solid var(--gold);
+    background:linear-gradient(90deg,rgba(255,200,87,.055),transparent 80%);
+  }
+  .hook strong{
+    display:block;
+    font-size:25px;line-height:1.45;font-weight:800;color:#FFF0C7;letter-spacing:.01em;
+  }
+  .hook p{
+    margin:9px 0 0;font-size:14px;line-height:1.7;color:var(--muted);
+  }
+  .hook p b{color:#DDE9F8;font-weight:600}
+  .cta-row{display:flex;align-items:center;gap:14px;margin-top:30px;flex-wrap:wrap}
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:10px;
+    height:52px;padding:0 24px;border-radius:9px;
+    font-size:14px;font-weight:700;letter-spacing:.03em;text-decoration:none;
+    transition:transform .2s ease,box-shadow .2s ease,background .2s ease;
+    white-space:nowrap;
+  }
+  .btn-primary{
+    background:linear-gradient(180deg,#FFD577,#FFBB3F);
+    color:#1B1204;
+    box-shadow:0 10px 30px rgba(255,185,63,.2),inset 0 1px 0 rgba(255,255,255,.5);
+  }
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 16px 38px rgba(255,185,63,.28)}
+  .btn-ghost{
+    color:var(--ink);border:1px solid rgba(255,255,255,.2);
+    background:rgba(255,255,255,.025);
+  }
+  .btn-ghost:hover{border-color:rgba(255,200,87,.45);background:rgba(255,200,87,.05);transform:translateY(-2px)}
+  .btn .tri{
+    width:0;height:0;border-top:5px solid transparent;border-bottom:5px solid transparent;
+    border-left:8px solid currentColor;display:inline-block;
+  }
+  .meta{
+    margin-top:15px;font-family:"Consolas","Arial",sans-serif;
+    font-size:10px;letter-spacing:.12em;color:var(--dim);
+  }
+  .stations{
+    display:grid;grid-template-columns:repeat(4,1fr);
+    gap:0;margin-top:38px;border-top:1px solid var(--line);padding-top:16px;
+  }
+  .station{position:relative;padding-right:12px}
+  .station .num{
+    font-family:"Bahnschrift","Arial",sans-serif;font-size:9.5px;letter-spacing:.16em;
+    color:var(--dim);
+  }
+  .station .label{
+    margin-top:7px;font-size:12.5px;color:var(--muted);letter-spacing:.05em;
+    display:flex;align-items:center;gap:7px;
+  }
+  .station .label i{width:5px;height:5px;border-radius:50%;background:var(--dim);display:inline-block}
+  .station.active .num{color:var(--blue-l)}
+  .station.active .label{color:var(--ink)}
+  .station.active .label i{background:var(--blue);box-shadow:0 0 8px var(--blue)}
+  .station.done .label i{background:var(--gold);box-shadow:0 0 8px rgba(255,200,87,.7)}
+
+  .viz-wrap{position:relative;z-index:1;width:100%;min-width:0}
+  .viz-card{
+    position:relative;
+    width:100%;
+    aspect-ratio:1.19/1;
+    max-height:calc(100vh - 220px);
+    border-radius:26px;
+    border:1px solid rgba(126,166,217,.22);
+    background:#070B10;
+    overflow:hidden;
+    box-shadow:
+      0 40px 100px rgba(0,0,0,.62),
+      0 0 0 1px rgba(0,0,0,.4),
+      inset 0 0 110px rgba(61,155,255,.035);
+  }
+  .viz-card::before{
+    content:"";position:absolute;inset:13px;border:1px solid rgba(126,166,217,.08);
+    border-radius:17px;pointer-events:none;z-index:4;
+  }
+  .corner{position:absolute;width:20px;height:20px;z-index:5;pointer-events:none;opacity:.65}
+  .corner.tl{left:22px;top:22px;border-left:1px solid var(--gold);border-top:1px solid var(--gold)}
+  .corner.tr{right:22px;top:22px;border-right:1px solid var(--gold);border-top:1px solid var(--gold)}
+  .corner.bl{left:22px;bottom:22px;border-left:1px solid var(--gold);border-bottom:1px solid var(--gold)}
+  .corner.br{right:22px;bottom:22px;border-right:1px solid var(--gold);border-bottom:1px solid var(--gold)}
+  .cell-svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+  .scanline{
+    position:absolute;left:0;right:0;height:130px;z-index:2;pointer-events:none;
+    background:linear-gradient(to bottom,transparent,rgba(61,155,255,.08) 48%,rgba(61,155,255,.02) 55%,transparent);
+    animation:scan 11s linear infinite;
+  }
+  @keyframes scan{0%{top:-140px}100%{top:100%}}
+  .hud{
+    position:absolute;inset:0;z-index:3;pointer-events:none;
+    display:flex;flex-direction:column;justify-content:space-between;
+    padding:24px 26px;
+  }
+  .hud-top{display:flex;justify-content:space-between;align-items:flex-start;gap:20px}
+  .hud-kicker{
+    font-family:"Bahnschrift","Arial",sans-serif;font-size:8.5px;letter-spacing:.22em;
+    color:var(--dim);text-transform:uppercase;
+  }
+  .hud-title{
+    margin-top:7px;font-size:12px;color:#DCE8F7;letter-spacing:.04em;
+  }
+  .hud-title span{color:var(--dim);font-size:10px}
+  .hud-right{text-align:right}
+  .hud-note{margin-top:7px;font-size:9.5px;color:var(--dim);letter-spacing:.06em}
+  .hud-bottom{display:flex;justify-content:space-between;align-items:flex-end;gap:18px}
+  .gene-tray{display:flex;gap:9px;pointer-events:auto}
+  .gene-card{
+    display:flex;align-items:center;gap:9px;
+    padding:9px 11px;border-radius:9px;
+    background:rgba(8,13,19,.82);
+    border:1px solid rgba(126,166,217,.18);
+    backdrop-filter:blur(12px);
+    box-shadow:0 8px 24px rgba(0,0,0,.35);
+  }
+  .gene-card.blue{border-color:rgba(61,155,255,.32)}
+  .gene-card.orange{border-color:rgba(255,138,31,.28)}
+  .gene-icon{width:18px;height:24px;flex:0 0 18px;opacity:.95}
+  .gene-card b{display:block;font-family:"Bahnschrift","Arial",sans-serif;font-size:12px;letter-spacing:.08em;line-height:1}
+  .gene-card.blue b{color:var(--blue-l)}
+  .gene-card.orange b{color:var(--orange-l)}
+  .gene-card span{display:block;font-size:8.5px;color:var(--dim);margin-top:5px;letter-spacing:.04em;white-space:nowrap}
+  .status-strip{
+    display:flex;align-items:center;gap:13px;
+    padding:9px 12px;border-radius:9px;
+    background:rgba(8,13,19,.82);
+    border:1px solid rgba(126,166,217,.15);
+    backdrop-filter:blur(12px);
+    font-family:"Bahnschrift","Arial",sans-serif;font-size:9px;letter-spacing:.1em;
+  }
+  .status{display:flex;align-items:center;gap:6px;color:var(--muted);white-space:nowrap}
+  .status i{width:4px;height:4px;border-radius:50%;display:inline-block}
+  .status.ok i{background:var(--green);box-shadow:0 0 7px var(--green)}
+  .status.bad i{background:#FF6B57;box-shadow:0 0 7px #FF6B57}
+  .status.wait i{background:var(--dim)}
+  .status.ok{color:#BFEAD1}
+  .status.bad{color:#FFB3A8}
+  .status.wait{color:var(--dim)}
+
+  footer{
+    flex:0 0 52px;height:52px;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:0 56px;border-top:1px solid var(--line);
+    font-family:"Consolas","Arial",sans-serif;font-size:9.5px;letter-spacing:.1em;
+    color:var(--dim);
+  }
+  .foot-left{display:flex;align-items:center;gap:10px}
+  .foot-left i{width:4px;height:4px;border-radius:50%;background:var(--gold);display:inline-block;box-shadow:0 0 7px var(--gold)}
+  .foot-right{display:flex;align-items:center;gap:14px}
+  .foot-right .arrow{color:var(--blue-l);animation:float 2.6s ease-in-out infinite}
+  @keyframes float{0%,100%{transform:translateY(-2px)}50%{transform:translateY(3px)}}
+
+  @media (max-width:1180px){
+    .hero{grid-template-columns:1fr;padding-top:34px;gap:36px}
+    .copy{max-width:760px}
+    .viz-card{aspect-ratio:1.3/1;max-height:none}
+    nav{display:none}
+    header,footer{padding-left:28px;padding-right:28px}
+    .hero{padding-left:28px;padding-right:28px}
+  }
+  @media (max-width:640px){
+    h1{font-size:64px}
+    .hook strong{font-size:21px}
+    .stations{grid-template-columns:repeat(2,1fr);row-gap:14px}
+    .stage-pill{display:none}
+    .hud-bottom{flex-direction:column;align-items:flex-start}
+    .status-strip{font-size:8px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .scanline,.stage-pill i,.foot-right .arrow{animation:none}
+  }
+</style>
+<link rel="stylesheet" href="sections.css">
+</head>
+<body>
+<div class="page">
+  <div class="vignette"></div>
+
+  <header>
+    <a class="brand" href="#">
+      <span class="brand-mark">
+        <svg viewBox="0 0 36 36" fill="none">
+          <path d="M18 3.5 30.5 10.7v14.6L18 32.5 5.5 25.3V10.7L18 3.5Z" stroke="#FFC857" stroke-width="1.4" opacity=".9"/>
+          <path d="M18 10.2 24.8 14v8.1L18 25.8l-6.8-3.7V14L18 10.2Z" stroke="#3D9BFF" stroke-width="1.2" opacity=".9"/>
+          <circle cx="18" cy="18" r="2.4" fill="#FFC857"/>
+        </svg>
+      </span>
+      <span class="brand-text">
+        <span class="en">IMMUNE RELAY / INTERACTIVE LAB</span>
+        <span class="cn">免疫接力 · 互动实验室</span>
+      </span>
+    </a>
+    <nav>
+      <a href="#film" class="active" data-nav="film">影片</a>
+      <a href="#lab" data-nav="lab">接力台</a>
+      <a href="#experiments" data-nav="experiments">对照实验</a>
+      <a href="#field" data-nav="field">研究边界</a>
+    </nav>
+    <div class="stage-pill"><i></i>研究阶段 · 非上市品种</div>
+  </header>
+
+  <main class="hero" id="top">
+    <section class="copy">
+      <div class="eyebrow">A 3-minute science story × playable lab</div>
+      <h1>免疫<span class="accent">接力</span></h1>
+      <div class="title-en">The Immune Relay</div>
+      <p class="lede">传感器 + 辅助 NLR，把警报传下去。</p>
+
+      <div class="hook">
+        <strong>只给水稻一个基因，它就不生病了吗？</strong>
+        <p>答案是不一定。识别靠 <b>Bs2</b>，传警报靠 <b>NRC</b>；两个基因一起，免疫才启动。</p>
+      </div>
+
+      <div class="cta-row">
+        <a class="btn btn-primary" href="#lab">开始接力 <span>→</span></a>
+        <a class="btn btn-ghost" href="#film">观看影片 <span style="color:var(--gold)">→</span></a>
+      </div>
+      <div class="meta">约 4 分钟影片 · 互动接力 · 四组对照</div>
+
+      <div class="stations">
+        <div class="station active">
+          <div class="num">STATION 01</div>
+          <div class="label"><i></i>识别</div>
+        </div>
+        <div class="station">
+          <div class="num">STATION 02</div>
+          <div class="label"><i></i>中继</div>
+        </div>
+        <div class="station">
+          <div class="num">STATION 03</div>
+          <div class="label"><i></i>放大</div>
+        </div>
+        <div class="station">
+          <div class="num">STATION 04</div>
+          <div class="label"><i></i>防御</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="viz-wrap">
+      <div class="viz-card">
+        <svg class="cell-svg" viewBox="0 0 860 720" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <defs>
+            <pattern id="gridA" width="40" height="40" patternUnits="userSpaceOnUse">
+              <path d="M40 0H0V40" fill="none" stroke="#7EA6D9" stroke-opacity=".055" stroke-width="1"/>
+            </pattern>
+            <radialGradient id="cardGlow" cx="76%" cy="48%" r="72%">
+              <stop offset="0%" stop-color="#3D9BFF" stop-opacity=".17"/>
+              <stop offset="52%" stop-color="#FF8A1F" stop-opacity=".055"/>
+              <stop offset="100%" stop-color="#05070A" stop-opacity="0"/>
+            </radialGradient>
+            <radialGradient id="cellFill" cx="68%" cy="42%" r="80%">
+              <stop offset="0%" stop-color="#153D29" stop-opacity=".92"/>
+              <stop offset="100%" stop-color="#06110C" stop-opacity=".96"/>
+            </radialGradient>
+            <linearGradient id="goldLine" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#FFC857" stop-opacity=".8"/>
+              <stop offset="55%" stop-color="#FFE7A0"/>
+              <stop offset="100%" stop-color="#FFC857" stop-opacity=".9"/>
+            </linearGradient>
+            <filter id="glowBlue" x="-90%" y="-90%" width="280%" height="280%">
+              <feGaussianBlur stdDeviation="7" result="b"/>
+              <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <filter id="glowOrange" x="-90%" y="-90%" width="280%" height="280%">
+              <feGaussianBlur stdDeviation="8" result="b"/>
+              <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <filter id="glowGold" x="-120%" y="-120%" width="340%" height="340%">
+              <feGaussianBlur stdDeviation="6" result="b"/>
+              <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <filter id="glowViolet" x="-100%" y="-100%" width="300%" height="300%">
+              <feGaussianBlur stdDeviation="7" result="b"/>
+              <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <filter id="blurBig" x="-100%" y="-100%" width="300%" height="300%">
+              <feGaussianBlur stdDeviation="26"/>
+            </filter>
+
+            <g id="xocRod">
+              <rect x="-42" y="-14" width="84" height="28" rx="14" fill="#1B0A2E" stroke="#B56CFF" stroke-width="3.6"/>
+              <circle cx="-19" cy="-2" r="2.6" fill="#EAD8FF" opacity=".9"/>
+              <circle cx="-2" cy="-2" r="2.6" fill="#EAD8FF" opacity=".9"/>
+              <circle cx="15" cy="-2" r="2.6" fill="#EAD8FF" opacity=".9"/>
+              <path d="M-42 0 C-62 -9,-76 6,-94 -2" fill="none" stroke="#B56CFF" stroke-width="2.8" stroke-linecap="round" opacity=".75"/>
+              <path d="M-42 5 C-60 15,-74 4,-90 13" fill="none" stroke="#B56CFF" stroke-width="2.8" stroke-linecap="round" opacity=".55"/>
+            </g>
+          </defs>
+
+          <rect width="860" height="720" fill="#070B10"/>
+          <rect width="860" height="720" fill="url(#gridA)"/>
+          <rect width="860" height="720" fill="url(#cardGlow)"/>
+
+          <!-- apoplast -->
+          <g opacity=".9">
+            <text x="64" y="116" font-family="Bahnschrift, Arial, sans-serif" font-size="9" letter-spacing="2.4" fill="#526274">APOPLAST / 质外体</text>
+            <path d="M64 128 H190" stroke="#526274" stroke-width="1" stroke-dasharray="2 5" opacity=".6"/>
+          </g>
+
+          <!-- rice cell -->
+          <rect x="250" y="88" width="582" height="552" rx="124" fill="url(#cellFill)" stroke="#7CE3A3" stroke-opacity=".58" stroke-width="2.4"/>
+          <rect x="261" y="99" width="560" height="530" rx="115" fill="none" stroke="#7CE3A3" stroke-opacity=".14" stroke-width="9"/>
+          <path d="M700 88 C758 120,790 190,800 280" fill="none" stroke="#7CE3A3" stroke-opacity=".16" stroke-width="1" stroke-dasharray="4 8"/>
+
+          <!-- organelles -->
+          <g opacity=".55">
+            <circle cx="744" cy="178" r="62" fill="#7CE3A3" fill-opacity=".035" stroke="#7CE3A3" stroke-opacity=".16" stroke-width="1.2"/>
+            <text x="744" y="182" text-anchor="middle" font-family="Microsoft YaHei, sans-serif" font-size="10" fill="#7CE3A3" opacity=".65">液泡</text>
+            <circle cx="742" cy="536" r="56" fill="#A9DDFF" fill-opacity=".03" stroke="#A9DDFF" stroke-opacity=".14" stroke-width="1.2"/>
+            <circle cx="742" cy="536" r="17" fill="#A9DDFF" fill-opacity=".08" stroke="#A9DDFF" stroke-opacity=".2" stroke-width="1"/>
+            <text x="742" y="610" text-anchor="middle" font-family="Microsoft YaHei, sans-serif" font-size="9.5" fill="#A9DDFF" opacity=".55">细胞核</text>
+            <ellipse cx="348" cy="540" rx="17" ry="9" fill="#7CE3A3" fill-opacity=".08" stroke="#7CE3A3" stroke-opacity=".2" stroke-width="1"/>
+            <ellipse cx="520" cy="570" rx="14" ry="7" fill="#7CE3A3" fill-opacity=".07" stroke="#7CE3A3" stroke-opacity=".18" stroke-width="1"/>
+            <ellipse cx="640" cy="572" rx="12" ry="6" fill="#7CE3A3" fill-opacity=".07" stroke="#7CE3A3" stroke-opacity=".18" stroke-width="1"/>
+          </g>
+
+          <!-- Xoc bacteria outside -->
+          <g filter="url(#glowViolet)">
+            <use href="#xocRod" x="150" y="230" transform="rotate(-12 150 230)"/>
+            <use href="#xocRod" x="128" y="410" transform="rotate(9 128 410)"/>
+            <use href="#xocRod" x="218" y="158" transform="rotate(5 218 158)"/>
+          </g>
+          <g opacity=".6">
+            <circle cx="112" cy="306" r="3" fill="#B56CFF"/>
+            <circle cx="95" cy="342" r="2" fill="#B56CFF"/>
+            <circle cx="180" cy="480" r="2.4" fill="#B56CFF"/>
+          </g>
+
+          <!-- injecting bacterium -->
+          <g filter="url(#glowViolet)">
+            <use href="#xocRod" x="208" y="332" transform="rotate(0 208 332)"/>
+            <path d="M250 332 H316" stroke="#B56CFF" stroke-width="3" stroke-linecap="round" opacity=".9"/>
+            <path d="M306 326 L320 332 L306 338" fill="none" stroke="#D7B6FF" stroke-width="2.2" stroke-linecap="round"/>
+            <circle cx="316" cy="332" r="2.6" fill="#EAD8FF"/>
+          </g>
+
+          <!-- AvrBs2 particles -->
+          <g class="hero-avr-particles" filter="url(#glowViolet)">
+            <circle cx="332" cy="320" r="2.6" fill="#B56CFF" style="animation-delay:0s"/>
+            <circle cx="342" cy="338" r="3.2" fill="#EAD8FF" style="animation-delay:.25s"/>
+            <circle cx="352" cy="312" r="2.2" fill="#B56CFF" style="animation-delay:.5s"/>
+            <circle cx="362" cy="346" r="2.8" fill="#B56CFF" style="animation-delay:.15s"/>
+            <circle cx="372" cy="326" r="3.4" fill="#EAD8FF" style="animation-delay:.7s"/>
+            <circle cx="382" cy="356" r="2.2" fill="#B56CFF" style="animation-delay:.35s"/>
+            <circle cx="392" cy="316" r="2.8" fill="#B56CFF" style="animation-delay:.9s"/>
+            <circle cx="402" cy="342" r="3.0" fill="#EAD8FF" style="animation-delay:.55s"/>
+            <circle cx="412" cy="330" r="2.2" fill="#B56CFF" style="animation-delay:1.1s"/>
+            <circle cx="342" cy="362" r="2.0" fill="#B56CFF" style="animation-delay:.8s"/>
+            <circle cx="362" cy="300" r="2.4" fill="#EAD8FF" style="animation-delay:.4s"/>
+            <circle cx="382" cy="368" r="2.0" fill="#B56CFF" style="animation-delay:1.2s"/>
+            <circle cx="402" cy="306" r="2.4" fill="#B56CFF" style="animation-delay:.65s"/>
+            <circle cx="352" cy="352" r="1.8" fill="#EAD8FF" style="animation-delay:1.0s"/>
+          </g>
+          <text x="366" y="388" text-anchor="middle" font-family="Bahnschrift, Arial, sans-serif" font-size="9" letter-spacing="1.4" fill="#C68CFF" opacity=".8">AvrBs2</text>
+
+          <!-- Bs2 sensor -->
+          <circle cx="430" cy="360" r="96" fill="#3D9BFF" opacity=".04" filter="url(#blurBig)"/>
+          <image href="assets/characters/bs2-look-right.svg?v=5" x="364" y="238" width="131" height="208" preserveAspectRatio="xMidYMid meet"/>
+          <text x="430" y="506" text-anchor="middle" font-family="Microsoft YaHei, sans-serif" font-size="12" font-weight="700" fill="#BFE4FF">Bs2 传感器</text>
+          <text x="430" y="524" text-anchor="middle" font-family="Microsoft YaHei, sans-serif" font-size="9" fill="#526274">扫描识别 AvrBs2</text>
+
+          <!-- signal line + break -->
+          <g filter="url(#glowGold)">
+            <path d="M447 338 H566" stroke="url(#goldLine)" stroke-width="4" stroke-linecap="round"/>
+            <circle cx="552" cy="338" r="4" fill="#FFF4CC"/>
+            <path d="M578 338 l14 -11 M578 338 l14 11 M578 338 h16" stroke="#FFC857" stroke-width="2.8" stroke-linecap="round" opacity=".85"/>
+            <path d="M626 338 H656" stroke="#FFC857" stroke-width="2.4" stroke-dasharray="3 7" opacity=".32"/>
+          </g>
+          <circle cx="600" cy="338" r="16" fill="#140B03" stroke="#FF8A1F" stroke-opacity=".7" stroke-width="1.4"/>
+          <text x="600" y="343" text-anchor="middle" font-family="Bahnschrift, Arial, sans-serif" font-size="15" fill="#FFB37A">!</text>
+          <text x="600" y="304" text-anchor="middle" font-family="Microsoft YaHei, sans-serif" font-size="10.5" fill="#FFB37A" letter-spacing=".06em">信号线断开</text>
+
+          <!-- NRC ghost slot -->
+          <circle cx="702" cy="360" r="101" fill="none" stroke="#FF8A1F" stroke-opacity=".16" stroke-width="1" stroke-dasharray="3 7"/>
+          <image href="assets/characters/nrc-idle.svg?v=4" x="642" y="248" width="120" height="212" opacity=".45" preserveAspectRatio="xMidYMid meet"/>
+          <text x="702" y="506" text-anchor="middle" font-family="Microsoft YaHei, sans-serif" font-size="12" font-weight="700" fill="#FFD08A" opacity=".8">NRC 中继</text>
+          <text x="702" y="524" text-anchor="middle" font-family="Microsoft YaHei, sans-serif" font-size="9" fill="#526274">待接入 · 水稻缺少 NRC</text>
+
+          <!-- small annotations -->
+          <g font-family="Microsoft YaHei, sans-serif" fill="#8FA0B5" opacity=".75">
+            <text x="66" y="360" font-size="9.5">Xoc 细菌</text>
+            <text x="66" y="376" font-size="8.5" fill="#526274">只在细胞间隙繁殖</text>
+            <path d="M124 354 H164" stroke="#526274" stroke-width="1" stroke-dasharray="2 4"/>
+            <text x="318" y="410" font-size="8.5" fill="#526274">细菌不进入细胞</text>
+          </g>
+        </svg>
+
+        <div class="scanline"></div>
+        <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+
+        <div class="hud">
+          <div class="hud-top">
+            <div>
+              <div class="hud-kicker">Live cell scan</div>
+              <div class="hud-title">水稻叶肉细胞 <span>/ 质外体</span></div>
+            </div>
+            <div class="hud-right">
+              <div class="hud-kicker">Specimen 01</div>
+              <div class="hud-note">示意 · 非真实比例</div>
+            </div>
+          </div>
+          <div class="hud-bottom">
+            <div class="gene-tray">
+              <div class="gene-card blue">
+                <img class="gene-icon" src="assets/dna/dna-bs2.svg" alt="">
+                <div><b>Bs2</b><span>辣椒 · 传感器</span></div>
+              </div>
+              <div class="gene-card orange">
+                <img class="gene-icon" src="assets/dna/dna-nrc.svg" alt="">
+                <div><b>NRC</b><span>烟草 · 辅助 NLR</span></div>
+              </div>
+            </div>
+            <div class="status-strip">
+              <span class="status ok"><i></i>识别 ✓</span>
+              <span class="status bad"><i></i>中继 ×</span>
+              <span class="status wait"><i></i>防御 —</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ================= FILM ENTRY ================= -->
+  <section class="film-entry-section section-dark" id="film">
+    <div class="section-inner">
+      <div class="section-heading split-heading">
+        <div>
+          <div class="section-kicker">THE FILM / 03:55</div>
+          <h2>四分钟，看懂一条免疫防线</h2>
+        </div>
+        <p>影片已完成。看完可以直接进入接力台，亲手接一次力。</p>
+      </div>
+
+      <div class="film-entry">
+        <div class="film-entry-poster">
+          <video class="film-entry-video" controls playsinline preload="metadata" poster="assets/poster.jpg">
+            <source src="assets/immune-relay.mp4" type="video/mp4">
+          </video>
+          <div class="film-entry-corner tl"></div><div class="film-entry-corner tr"></div>
+          <div class="film-entry-corner bl"></div><div class="film-entry-corner br"></div>
+        </div>
+        <aside class="film-entry-side">
+          <div class="film-entry-status">STATUS / READY</div>
+          <h3>影片已完成</h3>
+          <p>3 分 55 秒 2D 科普动画，旁白 + 字幕 + 音效。点击播放，或直接进入接力台。</p>
+          <a class="btn btn-ghost btn-small" href="#lab">直接进入接力台 →</a>
+          <div class="film-entry-facts"><span>03:55</span><span>1920×1080</span><span>旁白 + 字幕</span></div>
+          <div class="film-entry-fine">研究阶段 · 非上市品种 · 示意动画</div>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= THREE THINGS ================= -->
+  <section class="takeaways-section section-dark" id="takeaways">
+    <div class="section-inner">
+      <div class="section-heading center-heading">
+        <div class="section-kicker">THREE THINGS TO REMEMBER</div>
+        <h2>记住三件事就够了</h2>
+        <p>识别 → 中继 → 放大，缺一环都不行。</p>
+      </div>
+      <div class="takeaway-grid">
+        <article class="takeaway-card">
+          <div class="takeaway-num">01</div>
+          <div class="takeaway-icon">
+            <svg viewBox="0 0 48 48" fill="none">
+              <circle cx="24" cy="24" r="15" stroke="#A9DDFF" stroke-width="1.6"/>
+              <path d="M9 24h30M24 9v30" stroke="#3D9BFF" stroke-width="1" opacity=".35"/>
+              <circle cx="24" cy="24" r="5" fill="#FFC857"/>
+              <path d="M24 4v6M24 38v6M4 24h6M38 24h6" stroke="#A9DDFF" stroke-width="1.4" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <h3>识别靠 Bs2</h3>
+          <p>辣椒来的传感器 NLR，像哨兵一样认出 AvrBs2 效应蛋白。</p>
+          <div class="takeaway-tag blue">传感器 NLR</div>
+        </article>
+        <article class="takeaway-card">
+          <div class="takeaway-num">02</div>
+          <div class="takeaway-icon">
+            <svg viewBox="0 0 48 48" fill="none">
+              <path d="M24 5 41 15v18L24 43 7 33V15L24 5Z" stroke="#FFD08A" stroke-width="1.6"/>
+              <path d="M24 13 33 18.5v9L24 33l-9-5.5v-9L24 13Z" stroke="#FF8A1F" stroke-width="1.4" opacity=".8"/>
+              <circle cx="24" cy="23" r="4" fill="#FFC857"/>
+              <path d="M5 24h7M36 24h7" stroke="#FFD08A" stroke-width="1.2" stroke-linecap="round" opacity=".6"/>
+            </svg>
+          </div>
+          <h3>传警报靠 NRC</h3>
+          <p>NRC 不认敌人。它接收 Bs2 的信号，把警报放大成下游防御。</p>
+          <div class="takeaway-tag orange">辅助 NLR</div>
+        </article>
+        <article class="takeaway-card highlight">
+          <div class="takeaway-num">03</div>
+          <div class="takeaway-icon">
+            <svg viewBox="0 0 48 48" fill="none">
+              <path d="M24 4 40 10v13c0 10-7 17-16 21C15 40 8 33 8 23V10L24 4Z" stroke="#FFC857" stroke-width="1.8"/>
+              <path d="M17 24l5 5 10-11" stroke="#7CE3A3" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <h3>两个一起，免疫才启动</h3>
+          <p>只转 Bs2 不行，只转 NRC 也不行；两个基因一起，防线才接通。</p>
+          <div class="takeaway-tag gold">缺一不可</div>
+        </article>
+      </div>
+      <div class="takeaway-rail"><span></span><span></span><span></span></div>
+    </div>
+  </section>
+
+  <!-- ================= INTERACTIVE LAB ================= -->
+  <section class="lab-section section-dark" id="lab">
+    <div class="section-inner">
+      <div class="section-heading split-heading lab-heading">
+        <div>
+          <div class="section-kicker">INTERACTIVE / THE RELAY CONSOLE</div>
+          <h2>现在，换你来接一次力</h2>
+        </div>
+        <p>把两张基因卡拖进水稻细胞；手机上也可以先点卡片，再点空位。先放 Bs2，还是先放 NRC？试试看。</p>
+      </div>
+
+      <div class="lab-layout">
+        <aside class="lab-panel">
+          <div class="lab-progress" id="labProgress" aria-label="接力进度">
+            <div class="lab-step" data-step="1"><span>01</span>识别</div>
+            <div class="lab-step" data-step="2"><span>02</span>中继</div>
+            <div class="lab-step" data-step="3"><span>03</span>放大</div>
+            <div class="lab-step" data-step="4"><span>04</span>防御</div>
+          </div>
+
+          <div class="gene-stack">
+            <button class="gene-card gene-bs2" id="geneBs2" data-gene="bs2" type="button" aria-pressed="false">
+              <span class="gene-card-top"></span>
+              <span class="gene-card-icon">
+                <img src="assets/dna/dna-bs2.svg" alt="">
+              </span>
+              <span class="gene-card-text">
+                <b>Bs2</b>
+                <em>辣椒 · 传感器 NLR</em>
+                <small>负责识别 AvrBs2</small>
+              </span>
+              <span class="gene-card-drag">拖入细胞</span>
+            </button>
+
+            <button class="gene-card gene-nrc" id="geneNrc" data-gene="nrc" type="button" aria-pressed="false">
+              <span class="gene-card-top"></span>
+              <span class="gene-card-icon">
+                <img src="assets/dna/dna-nrc.svg" alt="">
+              </span>
+              <span class="gene-card-text">
+                <b>NRC</b>
+                <em>本氏烟草 · 辅助 NLR</em>
+                <small>把警报放大成防御</small>
+              </span>
+              <span class="gene-card-drag">拖入细胞</span>
+            </button>
+          </div>
+
+          <div class="lab-status" id="labStatus">
+            <div class="status-dot" id="statusDot"></div>
+            <div class="status-copy">
+              <div class="status-title" id="statusTitle">等待 Bs2</div>
+              <div class="status-detail" id="statusDetail">水稻缺少 NRC 类辅助 NLR；先看看只放 Bs2 会发生什么。</div>
+            </div>
+          </div>
+
+          <div class="lab-actions">
+            <button class="btn btn-ghost btn-small" id="labReset" type="button">重播</button>
+            <button class="btn btn-primary btn-small" id="labAuto" type="button">自动演示</button>
+          </div>
+
+          <div class="lab-note">
+            <b>科学红线</b>
+            <p>基因卡是图纸，蛋白角色是执行者。NRC 不认 AvrBs2；NRC 不复制；传感器不进入六聚体。</p>
+          </div>
+        </aside>
+
+        <div class="lab-stage" id="labStage" data-bs2="false" data-nrc="false" data-defense="false" data-bs2-phase="idle" data-nrc-turn="none" data-signal="off" data-activation="off">
+          <div class="stage-hud stage-hud-top">
+            <div>
+              <div class="hud-kicker">RELAY CONSOLE</div>
+              <div class="hud-title">水稻叶肉细胞 <span>/ 质外体</span></div>
+            </div>
+            <div class="hud-right">
+              <div class="hud-kicker">LIVE</div>
+              <div class="hud-note">示意 · 非真实比例</div>
+            </div>
+          </div>
+
+          <svg class="lab-svg" viewBox="0 0 1000 720" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+            <defs>
+              <pattern id="labGrid" width="40" height="40" patternUnits="userSpaceOnUse">
+                <path d="M40 0H0V40" fill="none" stroke="#7EA6D9" stroke-opacity=".055" stroke-width="1"/>
+              </pattern>
+              <radialGradient id="labCellFill" cx="68%" cy="42%" r="80%">
+                <stop offset="0%" stop-color="#153D29" stop-opacity=".92"/>
+                <stop offset="100%" stop-color="#06110C" stop-opacity=".96"/>
+              </radialGradient>
+              <radialGradient id="labGlow" cx="72%" cy="48%" r="70%">
+                <stop offset="0%" stop-color="#3D9BFF" stop-opacity=".14"/>
+                <stop offset="55%" stop-color="#FF8A1F" stop-opacity=".05"/>
+                <stop offset="100%" stop-color="#05070A" stop-opacity="0"/>
+              </radialGradient>
+              <radialGradient id="activationFlash" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#FFF6D8" stop-opacity=".95"/>
+                <stop offset="45%" stop-color="#FFC857" stop-opacity=".45"/>
+                <stop offset="100%" stop-color="#FFC857" stop-opacity="0"/>
+              </radialGradient>
+              <filter id="labGlowBlue" x="-90%" y="-90%" width="280%" height="280%">
+                <feGaussianBlur stdDeviation="7" result="b"/>
+                <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+              <filter id="labGlowOrange" x="-90%" y="-90%" width="280%" height="280%">
+                <feGaussianBlur stdDeviation="8" result="b"/>
+                <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+              <filter id="labGlowGold" x="-120%" y="-120%" width="340%" height="340%">
+                <feGaussianBlur stdDeviation="6" result="b"/>
+                <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+              <filter id="labGlowViolet" x="-100%" y="-100%" width="300%" height="300%">
+                <feGaussianBlur stdDeviation="7" result="b"/>
+                <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+              <filter id="labBlurBig" x="-100%" y="-100%" width="300%" height="300%">
+                <feGaussianBlur stdDeviation="28"/>
+              </filter>
+              <g id="labXocRod">
+                <rect x="-42" y="-14" width="84" height="28" rx="14" fill="#1B0A2E" stroke="#B56CFF" stroke-width="3.6"/>
+                <circle cx="-19" cy="-2" r="2.6" fill="#EAD8FF" opacity=".9"/>
+                <circle cx="-2" cy="-2" r="2.6" fill="#EAD8FF" opacity=".9"/>
+                <circle cx="15" cy="-2" r="2.6" fill="#EAD8FF" opacity=".9"/>
+                <path d="M-42 0 C-62 -9,-76 6,-94 -2" fill="none" stroke="#B56CFF" stroke-width="2.8" stroke-linecap="round" opacity=".75"/>
+                <path d="M-42 5 C-60 15,-74 4,-90 13" fill="none" stroke="#B56CFF" stroke-width="2.8" stroke-linecap="round" opacity=".55"/>
+              </g>
+              <g id="labXocChild">
+                <use href="#labXocRod" x="0" y="0" transform="scale(.72)"/>
+              </g>
+            </defs>
+
+            <rect width="1000" height="720" fill="#070B10"/>
+            <rect width="1000" height="720" fill="url(#labGrid)"/>
+            <rect width="1000" height="720" fill="url(#labGlow)"/>
+
+            <text x="64" y="116" font-family="Bahnschrift, Arial, sans-serif" font-size="9" letter-spacing="2.4" fill="#526274">APOPLAST / 质外体</text>
+            <path d="M64 128 H190" stroke="#526274" stroke-width="1" stroke-dasharray="2 5" opacity=".6"/>
+
+            <!-- rice cell -->
+            <rect x="250" y="88" width="700" height="560" rx="124" fill="url(#labCellFill)" stroke="#7CE3A3" stroke-opacity=".58" stroke-width="2.4"/>
+            <rect x="261" y="99" width="678" height="538" rx="114" fill="none" stroke="#7CE3A3" stroke-opacity=".14" stroke-width="9"/>
+
+            <!-- organelles -->
+            <g opacity=".55">
+              <circle cx="854" cy="182" r="58" fill="#7CE3A3" fill-opacity=".035" stroke="#7CE3A3" stroke-opacity=".16" stroke-width="1.2"/>
+              <text x="854" y="186" text-anchor="middle" font-family="Microsoft YaHei, sans-serif" font-size="10" fill="#7CE3A3" opacity=".65">液泡</text>
+              <circle cx="852" cy="548" r="52" fill="#A9DDFF" fill-opacity=".03" stroke="#A9DDFF" stroke-opacity=".14" stroke-width="1.2"/>
+              <circle cx="852" cy="548" r="16" fill="#A9DDFF" fill-opacity=".08" stroke="#A9DDFF" stroke-opacity=".2" stroke-width="1"/>
+              <text x="852" y="618" text-anchor="middle" font-family="Microsoft YaHei, sans-serif" font-size="9.5" fill="#A9DDFF" opacity=".55">细胞核</text>
+              <ellipse cx="350" cy="548" rx="17" ry="9" fill="#7CE3A3" fill-opacity=".08" stroke="#7CE3A3" stroke-opacity=".2" stroke-width="1"/>
+              <ellipse cx="520" cy="580" rx="14" ry="7" fill="#7CE3A3" fill-opacity=".07" stroke="#7CE3A3" stroke-opacity=".18" stroke-width="1"/>
+            </g>
+
+            <!-- bacteria -->
+            <g class="scene-bacteria" filter="url(#labGlowViolet)">
+              <use href="#labXocRod" x="150" y="230" transform="rotate(-12 150 230)"/>
+              <use href="#labXocRod" x="128" y="420" transform="rotate(9 128 420)"/>
+              <use href="#labXocRod" x="218" y="158" transform="rotate(5 218 158)"/>
+              <use href="#labXocRod" x="208" y="340" transform="rotate(0 208 340)"/>
+            </g>
+            <g class="bacteria-bubbles" opacity=".65">
+              <circle cx="112" cy="306" r="3" fill="#B56CFF"/>
+              <circle cx="95" cy="342" r="2" fill="#B56CFF"/>
+              <circle cx="180" cy="480" r="2.4" fill="#B56CFF"/>
+              <circle cx="248" cy="390" r="2" fill="#B56CFF"/>
+            </g>
+
+            <!-- injection -->
+            <g filter="url(#labGlowViolet)">
+              <path d="M250 340 H316" stroke="#B56CFF" stroke-width="3" stroke-linecap="round" opacity=".9"/>
+              <path d="M306 334 L320 340 L306 346" fill="none" stroke="#D7B6FF" stroke-width="2.2" stroke-linecap="round"/>
+              <circle cx="316" cy="340" r="2.6" fill="#EAD8FF"/>
+            </g>
+
+            <!-- AvrBs2 particles -->
+            <g id="avrParticles" class="avr-particles" filter="url(#labGlowViolet)"></g>
+            <text x="365" y="374" text-anchor="middle" font-family="Bahnschrift, Arial, sans-serif" font-size="9" letter-spacing="1.4" fill="#C68CFF" opacity=".8">AvrBs2</text>
+
+            <!-- sensor slot hint -->
+            <circle class="slot-hint slot-hint-bs2" cx="430" cy="360" r="92" fill="none" stroke="#3D9BFF" stroke-opacity=".18" stroke-width="1.2" stroke-dasharray="3 8"/>
+            <circle class="slot-hint slot-hint-nrc" cx="720" cy="360" r="92" fill="none" stroke="#FF8A1F" stroke-opacity=".18" stroke-width="1.2" stroke-dasharray="3 8"/>
+
+            <!-- Bs2 -->
+            <g class="scene-bs2">
+              <image class="bs2-pose bs2-pose-left" href="assets/characters/bs2-look-left.svg?v=5" x="368" y="232" width="125" height="208" preserveAspectRatio="xMidYMid meet"/>
+              <image class="bs2-pose bs2-pose-right" href="assets/characters/bs2-look-right.svg?v=5" x="364" y="232" width="131" height="208" preserveAspectRatio="xMidYMid meet"/>
+              <image class="bs2-pose bs2-pose-gold" href="assets/characters/bs2-look-right-gold.svg?v=5" x="364" y="232" width="131" height="208" preserveAspectRatio="xMidYMid meet"/>
+            </g>
+            <g class="scene-bs2">
+              <text x="430" y="506" text-anchor="middle" font-family="Microsoft YaHei, sans-serif" font-size="12" font-weight="700" fill="#BFE4FF">Bs2 传感器</text>
+              <text x="430" y="524" text-anchor="middle" font-family="Microsoft YaHei, sans-serif" font-size="9" fill="#526274">扫描识别 AvrBs2</text>
+            </g>
+
+            <!-- NRC -->
+            <g class="nrc-turn">
+              <image class="scene-nrc" id="sceneNrc" href="assets/characters/nrc-idle.svg?v=4" x="661" y="236" width="118" height="208" preserveAspectRatio="xMidYMid meet"/>
+            </g>
+            <g class="scene-nrc">
+              <text x="720" y="506" text-anchor="middle" font-family="Microsoft YaHei, sans-serif" font-size="12" font-weight="700" fill="#FFD08A">NRC 中继</text>
+              <text x="720" y="524" text-anchor="middle" font-family="Microsoft YaHei, sans-serif" font-size="9" fill="#526274">接收信号 · 准备放大</text>
+            </g>
+
+            <!-- gold signal waves, aligned with Bs2's wave line -->
+            <g id="signalWaves" class="signal-waves" filter="url(#labGlowGold)">
+              <g class="wave-set" style="--d:0s">
+                <path d="M500 258 Q518 272 500 286" fill="none" stroke="#FFC857" stroke-width="3" stroke-linecap="round" opacity=".9"/>
+                <path d="M510 252 Q530 272 510 292" fill="none" stroke="#FFC857" stroke-width="2.4" stroke-linecap="round" opacity=".65"/>
+              </g>
+              <g class="wave-set" style="--d:.18s">
+                <path d="M535 258 Q553 272 535 286" fill="none" stroke="#FFC857" stroke-width="3" stroke-linecap="round" opacity=".9"/>
+                <path d="M545 252 Q565 272 545 292" fill="none" stroke="#FFC857" stroke-width="2.4" stroke-linecap="round" opacity=".65"/>
+              </g>
+              <g class="wave-set" style="--d:.36s">
+                <path d="M570 258 Q588 272 570 286" fill="none" stroke="#FFC857" stroke-width="3" stroke-linecap="round" opacity=".9"/>
+                <path d="M580 252 Q600 272 580 292" fill="none" stroke="#FFC857" stroke-width="2.4" stroke-linecap="round" opacity=".65"/>
+              </g>
+              <g class="wave-set" style="--d:.54s">
+                <path d="M605 258 Q623 272 605 286" fill="none" stroke="#FFC857" stroke-width="3" stroke-linecap="round" opacity=".9"/>
+                <path d="M615 252 Q635 272 615 292" fill="none" stroke="#FFC857" stroke-width="2.4" stroke-linecap="round" opacity=".65"/>
+              </g>
+              <g class="wave-set" style="--d:.72s">
+                <path d="M640 258 Q658 272 640 286" fill="none" stroke="#FFC857" stroke-width="3" stroke-linecap="round" opacity=".9"/>
+                <path d="M650 252 Q670 272 650 292" fill="none" stroke="#FFC857" stroke-width="2.4" stroke-linecap="round" opacity=".65"/>
+              </g>
+            </g>
+
+            <!-- broken relay marker -->
+            <g class="scene-line-break">
+              <circle cx="600" cy="272" r="16" fill="#140B03" stroke="#FF8A1F" stroke-opacity=".7" stroke-width="1.4"/>
+              <text x="600" y="277" text-anchor="middle" font-family="Bahnschrift, Arial, sans-serif" font-size="15" fill="#FFB37A">!</text>
+              <text x="600" y="238" text-anchor="middle" font-family="Microsoft YaHei, sans-serif" font-size="10.5" fill="#FFB37A">警报传不出去</text>
+            </g>
+
+            <!-- NRC hexamer activation -->
+            <g class="scene-activated" id="sceneActivated">
+              <circle class="activation-flash" cx="720" cy="350" r="170" fill="url(#activationFlash)"/>
+              <g class="activation-form" transform="translate(1440 0) scale(-1 1)">
+                <path class="activation-line" d="M720.3 233.6 L793.1 274.2 L795.2 324.2 L761.2 362.9 L653.9 323.8 L664 269.4 Z" pathLength="100" fill="none" stroke="#FFC857" stroke-width="3.2" stroke-linejoin="round" filter="url(#labGlowGold)"/>
+                <image class="nrc-activated-img" href="assets/characters/nrc-activated.svg?v=6" x="640" y="188" width="192" height="260" preserveAspectRatio="xMidYMid meet"/>
+              </g>
+              <text x="720" y="548" text-anchor="middle" font-family="Microsoft YaHei, sans-serif" font-size="11" font-weight="700" fill="#FFD08A" stroke="#05070A" stroke-width="4" paint-order="stroke">NRC 六聚体（示意）</text>
+              <text x="720" y="566" text-anchor="middle" font-family="Microsoft YaHei, sans-serif" font-size="8.5" fill="#8FA0B5" stroke="#05070A" stroke-width="3" paint-order="stroke">6 个 NRC 单体依次连接 · 不是复制</text>
+            </g>
+
+            <!-- defense -->
+            <g class="scene-defense" id="sceneDefense">
+              <circle class="pulse-ring" cx="720" cy="360" r="160" fill="none" stroke="#FFC857" stroke-width="3" opacity=".6"/>
+              <circle class="pulse-ring delay" cx="720" cy="360" r="210" fill="none" stroke="#FF8A1F" stroke-width="2" opacity=".28"/>
+              <g transform="translate(300,470)">
+                <rect x="0" y="0" width="34" height="34" rx="8" fill="#2E7D32" opacity=".5" stroke="#7CE3A3" stroke-width="1.4"/>
+                <rect x="38" y="0" width="34" height="34" rx="8" fill="#FF8A1F" opacity=".85" stroke="#FFD08A" stroke-width="1.6"/>
+                <rect x="0" y="38" width="34" height="34" rx="8" fill="#2E7D32" opacity=".5" stroke="#7CE3A3" stroke-width="1.4"/>
+                <rect x="38" y="38" width="34" height="34" rx="8" fill="#2E7D32" opacity=".5" stroke="#7CE3A3" stroke-width="1.4"/>
+                <text x="36" y="-10" text-anchor="middle" font-family="Microsoft YaHei, sans-serif" font-size="9" fill="#FFD08A" stroke="#05070A" stroke-width="3" paint-order="stroke">局部细胞死亡</text>
+              </g>
+              <g transform="translate(548,500)" filter="url(#labGlowGold)">
+                <path d="M22 0 42 7v14c0 11-8 18-20 23C10 39 2 32 2 21V7L22 0Z" fill="#0B1A12" stroke="#FFC857" stroke-width="2"/>
+                <path d="M14 22l6 6 12-13" fill="none" stroke="#7CE3A3" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+              </g>
+              <text x="570" y="560" text-anchor="middle" font-family="Microsoft YaHei, sans-serif" font-size="9.5" font-weight="700" fill="#7CE3A3" stroke="#05070A" stroke-width="3" paint-order="stroke">防御启动</text>
+              <text x="570" y="576" text-anchor="middle" font-family="Microsoft YaHei, sans-serif" font-size="8.5" fill="#8FA0B5" stroke="#05070A" stroke-width="3" paint-order="stroke">ROS · 防御基因 · HR</text>
+            </g>
+
+            <!-- sensor outside label -->
+            <g class="scene-sensor-outside">
+              <text x="430" y="556" text-anchor="middle" font-family="Microsoft YaHei, sans-serif" font-size="9.5" fill="#8FA0B5" stroke="#05070A" stroke-width="3" paint-order="stroke">传感器不进入六聚体</text>
+              <path d="M490 545 C540 530,600 508,650 486" fill="none" stroke="#526274" stroke-width="1" stroke-dasharray="2 5"/>
+            </g>
+
+            <!-- free label -->
+            <g font-family="Microsoft YaHei, sans-serif" fill="#8FA0B5" opacity=".75">
+              <text x="66" y="360" font-size="9.5">Xoc 细菌</text>
+              <text x="66" y="376" font-size="8.5" fill="#526274">只在细胞间隙繁殖</text>
+              <path d="M124 354 H164" stroke="#526274" stroke-width="1" stroke-dasharray="2 4"/>
+              <text x="318" y="410" font-size="8.5" fill="#526274">细菌不进入细胞</text>
+            </g>
+          </svg>
+
+          <button class="drop-zone drop-bs2" id="dropBs2" data-slot="bs2" type="button" aria-label="Bs2 传感器位">
+            <span class="drop-figure"><img src="assets/characters/bs2-look-right.svg?v=5" alt=""></span>
+            <span>Bs2 传感器位</span>
+            <small>拖入或点击放置</small>
+          </button>
+          <button class="drop-zone drop-nrc" id="dropNrc" data-slot="nrc" type="button" aria-label="NRC 中继位">
+            <span class="drop-figure"><img src="assets/characters/nrc-idle.svg?v=4" alt=""></span>
+            <span>NRC 中继位</span>
+            <small>拖入或点击放置</small>
+          </button>
+
+          <div class="stage-hud stage-hud-bottom">
+            <div class="stage-status" id="stageStatus"><i></i>等待识别</div>
+            <div class="stage-legend">
+              <span><i class="dot blue"></i>Bs2 传感器</span>
+              <span><i class="dot orange"></i>NRC 中继</span>
+              <span><i class="dot gold"></i>免疫信号</span>
+            </div>
+          </div>
+          <div class="stage-toast" id="stageToast" role="status" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= FOUR EXPERIMENTS ================= -->
+  <section class="experiments-section section-dark" id="experiments">
+    <div class="section-inner">
+      <div class="section-heading split-heading">
+        <div>
+          <div class="section-kicker">THE EVIDENCE / FOUR CONTROLS</div>
+          <h2>四组对照，缺一不可</h2>
+        </div>
+        <p>先预测，再揭晓。看看哪一组能抗病，以及为什么。</p>
+      </div>
+
+      <div class="exp-grid" id="expGrid">
+        <article class="exp-card" data-answer="no" data-lesion="big" data-explain="没有 NRC，Bs2 能识别 AvrBs2，但警报传不出去，病斑仍然明显。">
+          <div class="exp-head"><span class="exp-num">01</span><h3>只转 Bs2</h3></div>
+          <div class="exp-leaf">
+            <svg viewBox="0 0 160 110" aria-hidden="true">
+              <path d="M18 78C30 24 90 12 142 20 138 72 92 98 18 78Z" fill="#DCEFC5" stroke="#173D2B" stroke-width="3"/>
+              <path d="M18 78C60 60 100 44 142 20" fill="none" stroke="#2E7D32" stroke-width="2"/>
+              <g class="lesion big"><ellipse cx="82" cy="54" rx="19" ry="13" fill="#B86B3A" opacity=".9"/><ellipse cx="70" cy="46" rx="8" ry="6" fill="#8B4513" opacity=".55"/></g>
+              <g class="lesion big"><ellipse cx="112" cy="42" rx="11" ry="8" fill="#B86B3A" opacity=".8"/></g>
+            </svg>
+            <span class="exp-lesion-label">病斑明显</span>
+          </div>
+          <div class="exp-genes"><span class="chip on blue">Bs2 +</span><span class="chip off">NRC −</span><span class="chip on violet">AvrBs2 +</span></div>
+          <div class="exp-prompt">
+            <span>你猜它抗不抗病？</span>
+            <div class="exp-buttons">
+              <button class="guess" type="button" data-guess="yes">抗病</button>
+              <button class="guess" type="button" data-guess="no">不抗病</button>
+            </div>
+          </div>
+          <div class="exp-result" hidden>
+            <div class="exp-verdict"></div>
+            <p class="exp-explain"></p>
+          </div>
+        </article>
+
+        <article class="exp-card" data-answer="no" data-lesion="big" data-explain="NRC 不认 AvrBs2。没有 Bs2 负责识别，整条接力根本没有开始。">
+          <div class="exp-head"><span class="exp-num">02</span><h3>只转 NRC</h3></div>
+          <div class="exp-leaf">
+            <svg viewBox="0 0 160 110" aria-hidden="true">
+              <path d="M18 78C30 24 90 12 142 20 138 72 92 98 18 78Z" fill="#DCEFC5" stroke="#173D2B" stroke-width="3"/>
+              <path d="M18 78C60 60 100 44 142 20" fill="none" stroke="#2E7D32" stroke-width="2"/>
+              <g class="lesion big"><ellipse cx="80" cy="54" rx="21" ry="14" fill="#B86B3A" opacity=".9"/><ellipse cx="100" cy="44" rx="10" ry="7" fill="#8B4513" opacity=".55"/></g>
+              <g class="lesion big"><ellipse cx="60" cy="42" rx="9" ry="6" fill="#B86B3A" opacity=".8"/></g>
+            </svg>
+            <span class="exp-lesion-label">病斑明显</span>
+          </div>
+          <div class="exp-genes"><span class="chip off">Bs2 −</span><span class="chip on orange">NRC +</span><span class="chip on violet">AvrBs2 +</span></div>
+          <div class="exp-prompt">
+            <span>你猜它抗不抗病？</span>
+            <div class="exp-buttons">
+              <button class="guess" type="button" data-guess="yes">抗病</button>
+              <button class="guess" type="button" data-guess="no">不抗病</button>
+            </div>
+          </div>
+          <div class="exp-result" hidden>
+            <div class="exp-verdict"></div>
+            <p class="exp-explain"></p>
+          </div>
+        </article>
+
+        <article class="exp-card" data-answer="yes" data-lesion="small" data-explain="Bs2 识别 AvrBs2，NRC 把信号放大，防御启动。病斑小，病菌扩散受抑。">
+          <div class="exp-head"><span class="exp-num">03</span><h3>Bs2 + NRC</h3></div>
+          <div class="exp-leaf">
+            <svg viewBox="0 0 160 110" aria-hidden="true">
+              <path d="M18 78C30 24 90 12 142 20 138 72 92 98 18 78Z" fill="#DCEFC5" stroke="#173D2B" stroke-width="3"/>
+              <path d="M18 78C60 60 100 44 142 20" fill="none" stroke="#2E7D32" stroke-width="2"/>
+              <g class="lesion small"><ellipse cx="82" cy="54" rx="8" ry="5.5" fill="#B86B3A" opacity=".9"/></g>
+              <g class="lesion small"><ellipse cx="94" cy="47" rx="4" ry="3" fill="#8B4513" opacity=".65"/></g>
+            </svg>
+            <span class="exp-lesion-label">病斑小</span>
+          </div>
+          <div class="exp-genes"><span class="chip on blue">Bs2 +</span><span class="chip on orange">NRC +</span><span class="chip on violet">AvrBs2 +</span></div>
+          <div class="exp-prompt">
+            <span>你猜它抗不抗病？</span>
+            <div class="exp-buttons">
+              <button class="guess" type="button" data-guess="yes">抗病</button>
+              <button class="guess" type="button" data-guess="no">不抗病</button>
+            </div>
+          </div>
+          <div class="exp-result" hidden>
+            <div class="exp-verdict"></div>
+            <p class="exp-explain"></p>
+          </div>
+        </article>
+
+        <article class="exp-card" data-answer="no" data-lesion="big" data-explain="病菌缺少 AvrBs2，Bs2 没有可识别的效应蛋白，抗性也就消失。识别是整条链的起点。">
+          <div class="exp-head"><span class="exp-num">04</span><h3>Bs2 + NRC <em>ΔAvrBs2</em></h3></div>
+          <div class="exp-leaf">
+            <svg viewBox="0 0 160 110" aria-hidden="true">
+              <path d="M18 78C30 24 90 12 142 20 138 72 92 98 18 78Z" fill="#DCEFC5" stroke="#173D2B" stroke-width="3"/>
+              <path d="M18 78C60 60 100 44 142 20" fill="none" stroke="#2E7D32" stroke-width="2"/>
+              <g class="lesion big"><ellipse cx="78" cy="52" rx="18" ry="12" fill="#B86B3A" opacity=".9"/><ellipse cx="100" cy="58" rx="9" ry="6" fill="#8B4513" opacity=".55"/></g>
+              <g class="lesion big"><ellipse cx="112" cy="38" rx="8" ry="5" fill="#B86B3A" opacity=".8"/></g>
+              <g transform="translate(112,78)"><circle r="13" fill="#FFFDF6" stroke="#7B3FA0" stroke-width="2"/><path d="M-6 -6 6 6M6 -6 -6 6" stroke="#7B3FA0" stroke-width="2" stroke-linecap="round"/></g>
+            </svg>
+            <span class="exp-lesion-label">病斑明显</span>
+          </div>
+          <div class="exp-genes"><span class="chip on blue">Bs2 +</span><span class="chip on orange">NRC +</span><span class="chip off violet">AvrBs2 −</span></div>
+          <div class="exp-prompt">
+            <span>你猜它抗不抗病？</span>
+            <div class="exp-buttons">
+              <button class="guess" type="button" data-guess="yes">抗病</button>
+              <button class="guess" type="button" data-guess="no">不抗病</button>
+            </div>
+          </div>
+          <div class="exp-result" hidden>
+            <div class="exp-verdict"></div>
+            <p class="exp-explain"></p>
+          </div>
+        </article>
+      </div>
+
+      <div class="exp-footer">
+        <div class="exp-summary" id="expSummary" hidden>
+          <b>结论</b> 识别依赖 AvrBs2，抗病依赖 Bs2 + NRC 同时存在。
+        </div>
+        <button class="btn btn-ghost btn-small" id="expReset" type="button">重置实验</button>
+        <span class="exp-note">示意图，非真实数据；病斑大小仅表示相对差异。</span>
+      </div>
+
+      <div class="exp-egg" id="expEgg" hidden>
+        <div class="exp-egg-glow"></div>
+        <div class="exp-egg-icon">
+          <svg viewBox="0 0 88 88" fill="none" aria-hidden="true">
+            <path d="M28 22H16v10c0 9 6 14 14 14" stroke="#FFC857" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M60 22h12v10c0 9-6 14-14 14" stroke="#FFC857" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M26 12h36v16c0 12-8 21-18 21s-18-9-18-21V12Z" fill="#2A1A05" stroke="#FFC857" stroke-width="3" stroke-linejoin="round"/>
+            <path d="M24 12h40" stroke="#FFC857" stroke-width="3" stroke-linecap="round"/>
+            <path d="M44 49v12M34 65h20M28 74h32" stroke="#FFC857" stroke-width="3" stroke-linecap="round"/>
+            <path d="M32 65h24v6H32z" fill="#FFC857" fill-opacity=".18" stroke="#FFC857" stroke-width="2"/>
+            <path d="M44 21l3.2 6.5 7.2 1-5.2 5 1.2 7.1-6.4-3.4-6.4 3.4 1.2-7.1-5.2-5 7.2-1L44 21Z" fill="#FFC857" stroke="#FFD08A" stroke-width="1.2" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="exp-egg-copy">
+          <div class="exp-egg-kicker">HIDDEN ACHIEVEMENT / RELAY MASTER</div>
+          <h3>四题全对，免疫接力完成</h3>
+          <p>识别 → 中继 → 放大 → 防御，这条线你已经走通了。识别依赖 AvrBs2，抗病依赖 Bs2 + NRC 同时存在。</p>
+        </div>
+        <div class="exp-egg-stamp">4 / 4</div>
+        <div class="exp-egg-sparks" aria-hidden="true">
+          <i style="--dx:-220px;--dy:-34px"></i>
+          <i style="--dx:-150px;--dy:42px"></i>
+          <i style="--dx:-80px;--dy:-48px"></i>
+          <i style="--dx:60px;--dy:-56px"></i>
+          <i style="--dx:140px;--dy:36px"></i>
+          <i style="--dx:220px;--dy:-22px"></i>
+          <i style="--dx:-30px;--dy:60px"></i>
+          <i style="--dx:100px;--dy:62px"></i>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= FIELD / BOUNDARY ================= -->
+  <section class="field-section" id="field">
+    <div class="paper-curve" aria-hidden="true">
+      <svg viewBox="0 0 1440 90" preserveAspectRatio="none"><path d="M0 90V42c120-24 250-38 400-30 160 9 270 38 430 38 180 0 300-32 430-38 70-3 130 1 180 10v68H0Z" fill="#F7F3E8"/></svg>
+    </div>
+    <div class="section-inner field-inner">
+      <div class="section-heading field-heading">
+        <div class="section-kicker">FROM CELL TO FIELD / 从细胞到田间</div>
+        <h2>这套策略，走到了哪一步？</h2>
+        <p>论文在拟南芥、大豆和水稻中验证了策略；田间试验回答的是另一个问题：抗病性提高之后，农艺性状怎么样？</p>
+      </div>
+
+      <div class="scale-strip">
+        <div class="scale-step"><span class="scale-dot"></span><b>蛋白</b><em>Bs2 / NRC</em></div>
+        <div class="scale-line"></div>
+        <div class="scale-step"><span class="scale-dot"></span><b>细胞</b><em>识别 · 中继</em></div>
+        <div class="scale-line"></div>
+        <div class="scale-step"><span class="scale-dot"></span><b>叶片</b><em>局部病斑</em></div>
+        <div class="scale-line"></div>
+        <div class="scale-step"><span class="scale-dot"></span><b>田间</b><em>农艺性状</em></div>
+      </div>
+
+      <div class="field-grid">
+        <div class="species-card">
+          <div class="species-head"><h3>已验证的物种</h3><span>3 / 3</span></div>
+          <div class="species-list">
+            <div class="species verified">
+              <span class="plant-icon">
+                <svg viewBox="0 0 40 40" fill="none"><ellipse cx="20" cy="27" rx="12" ry="5" fill="#C0F0A0" stroke="#173D2B" stroke-width="1.8"/><ellipse cx="13" cy="21" rx="7" ry="4" transform="rotate(-30 13 21)" fill="#C0F0A0" stroke="#173D2B" stroke-width="1.6"/><ellipse cx="27" cy="21" rx="7" ry="4" transform="rotate(30 27 21)" fill="#C0F0A0" stroke="#173D2B" stroke-width="1.6"/><path d="M20 27V14" stroke="#173D2B" stroke-width="1.8" stroke-linecap="round"/></svg>
+              </span>
+              <div><b>拟南芥</b><em>实验室验证</em></div>
+              <span class="check">✓</span>
+            </div>
+            <div class="species verified">
+              <span class="plant-icon">
+                <svg viewBox="0 0 40 40" fill="none"><path d="M20 34V15" stroke="#173D2B" stroke-width="1.8" stroke-linecap="round"/><path d="M20 24C12 24 8 20 7 13c8 0 12 4 13 11Z" fill="#C0F0A0" stroke="#173D2B" stroke-width="1.6"/><path d="M20 20c8 0 12-4 13-11-8 0-12 4-13 11Z" fill="#C0F0A0" stroke="#173D2B" stroke-width="1.6"/></svg>
+              </span>
+              <div><b>大豆</b><em>实验室验证</em></div>
+              <span class="check">✓</span>
+            </div>
+            <div class="species verified">
+              <span class="plant-icon">
+                <svg viewBox="0 0 40 40" fill="none"><path d="M20 34V10" stroke="#173D2B" stroke-width="1.8" stroke-linecap="round"/><path d="M20 14c-6-3-8-6-8-10 6 0 8 3 8 10ZM20 20c6-3 8-6 8-10-6 0-8 3-8 10ZM20 26c-6-3-8-6-8-10 6 0 8 3 8 10Z" fill="#C0F0A0" stroke="#173D2B" stroke-width="1.5"/></svg>
+              </span>
+              <div><b>水稻</b><em>实验室 + 田间</em></div>
+              <span class="check">✓</span>
+            </div>
+            <div class="species untested">
+              <span class="plant-icon">
+                <svg viewBox="0 0 40 40" fill="none"><path d="M20 34V10" stroke="#8B9B90" stroke-width="1.8" stroke-linecap="round"/><path d="M20 16c-4-2-6-5-6-8 4 0 6 2 6 8ZM20 22c4-2 6-5 6-8-4 0-6 2-6 8Z" fill="#DCE5DA" stroke="#8B9B90" stroke-width="1.5"/></svg>
+              </span>
+              <div><b>小麦</b><em>未测试</em></div>
+              <span class="untested-tag">?</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="field-data-card">
+          <div class="field-data-head"><h3>田间农艺性状</h3><span>本试验条件下</span></div>
+          <div class="trait-grid">
+            <div class="trait">
+              <span class="trait-icon"><svg viewBox="0 0 32 32" fill="none"><path d="M16 27V6M10 12l6-6 6 6M10 27h12" stroke="#2E7D32" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              <b>株高</b><span>≈ 无显著差异</span>
+            </div>
+            <div class="trait">
+              <span class="trait-icon"><svg viewBox="0 0 32 32" fill="none"><path d="M16 28V15M16 18c-5 0-8-2-8-7 5 0 8 2 8 7ZM16 23c5 0 8-2 8-7-5 0-8 2-8 7Z" stroke="#2E7D32" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              <b>分蘖</b><span>≈ 无显著差异</span>
+            </div>
+            <div class="trait">
+              <span class="trait-icon"><svg viewBox="0 0 32 32" fill="none"><path d="M16 28V8M16 10c-6-2-8-5-8-9 6 0 8 3 8 9ZM16 16c6-2 8-5 8-9-6 0-8 3-8 9ZM16 22c-6-2-8-5-8-9 6 0 8 3 8 9Z" stroke="#2E7D32" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              <b>穗粒数</b><span>≈ 无显著差异</span>
+            </div>
+            <div class="trait">
+              <span class="trait-icon"><svg viewBox="0 0 32 32" fill="none"><ellipse cx="16" cy="18" rx="6" ry="9" stroke="#2E7D32" stroke-width="1.8"/><path d="M16 9V4M13 6l3-3 3 3" stroke="#2E7D32" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              <b>千粒重</b><span>≈ 无显著差异</span>
+            </div>
+          </div>
+          <p class="field-note">“无显著差异”是农艺性状结果，不是安全性结论。田间数据为定性示意。</p>
+        </div>
+      </div>
+
+      <div class="boundary-grid">
+        <article class="boundary-card">
+          <span class="boundary-icon">!</span>
+          <h3>转基因监管</h3>
+          <p>研究材料，非上市品种；审批与监管仍在路上。</p>
+        </article>
+        <article class="boundary-card">
+          <span class="boundary-icon">↻</span>
+          <h3>抗性持久性</h3>
+          <p>病菌可能演化出新的逃逸方式，需要长期监测。</p>
+        </article>
+        <article class="boundary-card">
+          <span class="boundary-icon">◎</span>
+          <h3>生态影响</h3>
+          <p>大规模种植的生态后果，仍需评估。</p>
+        </article>
+      </div>
+
+      <div class="citation-box">
+        <div class="citation-main"><b>科学依据</b> Du X, Alam M, Witek K, et al. Interfamily co-transfer of sensor and helper NLRs extends immune receptor functionality between angiosperms. <i>Cell</i>. 2025;188(17):4505–4516.e14.</div>
+        <div class="citation-doi">doi:10.1016/j.cell.2025.05.028</div>
+      </div>
+
+      <div class="field-stamp">示意动画 · 非真实比例 / 时间</div>
+    </div>
+  </section>
+
+  <!-- ================= FINALE ================= -->
+  <section class="finale-section" id="credits">
+    <div class="finale-horizon"></div>
+    <div class="section-inner finale-inner">
+      <div class="section-kicker">THE RELAY CONTINUES</div>
+      <h2>免疫不是单个英雄的独角戏，<br>而是一条需要接力的防线。</h2>
+      <p>从识别到中继，从细胞到田间——这条线，才刚刚接上。</p>
+      <div class="finale-actions">
+        <a class="btn btn-primary" href="#film"><span class="tri"></span>重看影片</a>
+        <a class="btn btn-ghost" href="#lab">再玩一次接力 →</a>
+      </div>
+      <div class="finale-credits">
+        <div><b>科学依据</b> Du et al., Cell 2025 · 188(17):4505–4516.e14</div>
+        <div>本片为科普示意，细胞、蛋白、病菌的大小、数量和时间尺度均经过艺术简化。</div>
+        <div>研究为转基因材料，不是已经上市的抗病品种；转基因监管、抗性持久性和生态影响仍需评估。</div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="foot-left"><i></i>免疫接力 · 互动实验室　|　基于 Du et al., Cell 2025</div>
+    <div class="foot-right"><span>SCROLL TO EXPLORE</span><span class="arrow">↑</span></div>
+  </footer>
+</div>
+
+<div class="site-toast" id="siteToast" role="status" aria-live="polite"></div>
+<script src="app.js"></script>
+</body>
+</html>
